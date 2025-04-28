@@ -24,13 +24,24 @@ Mejora implementada:
   Beneficio esperado: reduce el ruido en la matriz TF-IDF y mejora la calidad del espacio latente, incrementando la precisión y consistencia de las similitudes.
 
 Definición del modelo:
-Q: Vector latente de la consulta, obtenido al transformar el TF-IDF de la query y proyectarlo con TruncatedSVD.  
-D: Vector latente de cada documento, resultado de aplicar TruncatedSVD a la matriz TF-IDF completa.  
-F: 
+Para Latent Semantic Indexing (LSI) la definición queda así:
+
+D: \{ v_d ∈ ℝᵏ | v_d = SVD(TF-IDF(d)) para cada documento d de la colección \}  
+Es el conjunto de representaciones latentes (vectores de dimensión k) de todos los documentos, obtenidos al aplicar TF-IDF seguido de la descomposición SVD truncada.
+
+Q: \{ v_q ∈ ℝᵏ | v_q = SVD(TF-IDF(q)) para cada consulta q del usuario \}  
+Es el conjunto de representaciones latentes (mismos k componentes) de todas las consultas, usando la misma vectorización y descomposición que para los documentos.
+
+F: (TF-IDF, TruncatedSVD_k)  
+Es el framework de modelado que consiste en:
+1. Transformar cada texto (documento o consulta) en un vector TF-IDF con un *vocabulario* común.  
+2. Aplicar TruncatedSVD para reducir la matriz término-documento a k factores latentes, proyectando cada vector de términos a su vector latente de dimensión k.
+
+R(v_q, v_d): Similitud de coseno entre vectores latentes  
 \[
-\text{sim}(Q,D) = \frac{Q_{\text{latent}} \cdot D_{\text{latent}}}{\|Q_{\text{latent}}\|\,\|D_{\text{latent}}\|}
+R(v_q, v_d) \;=\;\frac{v_q \cdot v_d}{\|v_q\|\;\|v_d\|}\,,
 \]
-R: Se ordenan los documentos de mayor a menor similitud y se devuelven los top_k.
+que asigna un puntaje real a cada par (consulta, documento) de acuerdo a su cercanía en el espacio semántico de k dimensiones.
 
 ¿Dependencia entre los términos?  
 Sí. LSI incorpora dependencia al capturar patrones de co-ocurrencia en la descomposición SVD, revelando relaciones semánticas entre términos.
