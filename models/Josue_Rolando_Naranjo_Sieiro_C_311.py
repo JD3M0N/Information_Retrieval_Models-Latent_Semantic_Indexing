@@ -2,32 +2,44 @@
 NAME = "Josue Rolando Naranjo Sieiro"
 GROUP = "311"
 CAREER = "Ciencia de la Computación"
-MODEL = "Modelo vectorial Generalizado (Generalized Vector Space)"
+MODEL = "Modelo de Semántica Latente (Latent Semantic Indexing)"
 
 """
 INFORMACIÓN EXTRA:
 
 Fuente bibliográfica:
-...
+- Information Retrieval WS 17/18, Lecture 10: Latent Semantic Indexing -https://www.youtube.com/watch?v=CwBn0voJDaw
+- Latent Semantic Indexing | Explained with Examples | Georgia Tech CSE6242 - https://www.youtube.com/watch?v=M1duqgg8-IM (joya)
+- Scikit-learn documentation. (2024). TF-IDF feature extraction.  https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction
+- Scikit-learn documentation. (2024). Latent Semantic Analysis using TruncatedSVD.  https://scikit-learn.org/stable/modules/decomposition.html#latent-semantic-analysis
+- Wikipedia contributors. (2024). Latent Semantic Analysis. https://en.wikipedia.org/wiki/Latent_semantic_analysis
+- Deerwester, S., Dumais, S. T., Furnas, G. W., Landauer, T. K. & Harshman, R. (1990). Indexing by Latent Semantic Analysis. *Journal of the American Society for Information Science*, 41(6): 391–407. URL: https://www.cs.csustan.edu/~mmartin/LDS/Deerwester-et-al.pdf :contentReference[oaicite:0]{index=0}
+- Dumais, S. T., Furnas, G. W., Landauer, T. K., Deerwester, S. C. & Harshman, R. (1988). Using latent semantic analysis to improve access to textual information. *Proceedings of the SIGCHI Conference on Human Factors in Computing Systems*. URL: https://www.researchgate.net/publication/2462489_Using_Latent_Semantic_Analysis_To_Improve_Access_To_Textual_Information :contentReference[oaicite:1]{index=1}
+- Berry, M. W., Dumais, S. T. & O’Brien, G. W. (1995). Using linear algebra for intelligent information retrieval. *SIAM Review*, 37(4): 573–595. :contentReference[oaicite:2]{index=2}
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). *Introduction to Information Retrieval*. Cambridge University Press. URL: https://nlp.stanford.edu/IR-book/information-retrieval-book.html :contentReference[oaicite:3]{index=3}
+- Baeza-Yates, R. & Ribeiro-Neto, B. (2011). *Modern Information Retrieval: The Concepts and Technology Behind Search* (2ª ed.). Addison-Wesley. URL: https://www.amazon.com/Modern-Information-Retrieval-Concepts-Technology/dp/0321416910 :contentReference[oaicite:4]{index=4}
 
 Mejora implementada:
-...
+- Se configuró el vectorizador TF-IDF con `lowercase=True`, `stop_words='english'` y `max_df=0.8` para filtrar términos triviales y estandarizar el texto antes de la descomposición SVD.  
+  Beneficio esperado: reduce el ruido en la matriz TF-IDF y mejora la calidad del espacio latente, incrementando la precisión y consistencia de las similitudes.
 
 Definición del modelo:
-Q: ... 
-D: ...
-F: ...
-R: ...
+Q: Vector latente de la consulta, obtenido al transformar el TF-IDF de la query y proyectarlo con TruncatedSVD.  
+D: Vector latente de cada documento, resultado de aplicar TruncatedSVD a la matriz TF-IDF completa.  
+F: 
+\[
+\text{sim}(Q,D) = \frac{Q_{\text{latent}} \cdot D_{\text{latent}}}{\|Q_{\text{latent}}\|\,\|D_{\text{latent}}\|}
+\]
+R: Se ordenan los documentos de mayor a menor similitud y se devuelven los top_k.
 
-¿Dependencia entre los términos?
-...
+¿Dependencia entre los términos?  
+Sí. LSI incorpora dependencia al capturar patrones de co-ocurrencia en la descomposición SVD, revelando relaciones semánticas entre términos.
 
-Correspondencia parcial documento-consulta:
-...
+Correspondencia parcial documento-consulta?  
+Sí. Permite recuperar documentos que no comparten palabras literales con la consulta, pero sí conceptos semánticos afines.
 
-Ranking:
-...
-
+Ranking?  
+Sí. Los documentos se clasifican por similitud de coseno en el espacio latente, priorizando los más cercanos conceptualmente.
 """
 
 
