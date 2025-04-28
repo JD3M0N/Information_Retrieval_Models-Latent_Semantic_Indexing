@@ -48,7 +48,7 @@ class InformationRetrievalModel:
         """
         self.vectorizer = TfidfVectorizer(
             lowercase=True,
-            stop_words='spanish',      # o 'english'
+            stop_words='english',      
             max_df=0.8,                # ignora terminos demasiado frecuentes
         )
         self.tfidf_matrix = None
@@ -127,9 +127,10 @@ class InformationRetrievalModel:
             
             # Resultados : doc_id y puntuaje de similitud
             ranked_docs = [(self.doc_ids[i], float(sim_scores[i])) for i in top_index]
+            retrieved_ids = [doc_id for doc_id, _ in ranked_docs]
             results[qid] = {
                 'text' : query_text,
-                'results' : ranked_docs
+                'results' : retrieved_ids
             } 
             
         return results
