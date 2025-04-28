@@ -11,3 +11,5 @@ https://machinelearninggeek.com/latent-semantic-indexing-using-scikit-learn/ - A
 https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
 
 https://medium.com/@adi_enasoaie/easy-lsi-pipeline-using-scikit-learn-a073f2484408#:~:text=should%20go%20with%20100%20to,for%20a%20random%20number%20generator
+
+test
