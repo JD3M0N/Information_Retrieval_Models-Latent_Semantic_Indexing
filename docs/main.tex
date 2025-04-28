@@ -1,0 +1,172 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+% Portada
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Implementación de Latent Semantic Indexing \\[0.5em] en un Sistema de Recuperación de Información\par}
+  \vspace{2cm}
+  {\Large Josue Rolando Naranjo Sieiro\par}
+  {\large Estudiante de 3er año, Ciencias de la Computación\par}
+  {\large Universidad de La Habana\par}
+  \vfill
+  {\large Abril de 2025\par}
+\end{titlepage}
+
+\tableofcontents
+\cleardoublepage
+
+\chapter{Introducción}
+La recuperación de información (RI) consiste en encontrar documentos relevantes a partir de consultas textuales. En modelos clásicos, la búsqueda literal de términos padece problemas de \emph{sinonimia} y \emph{polisemia}. Para mitigar estos efectos, implementamos el modelo \emph{Latent Semantic Indexing} (LSI), que proyecta documentos y consultas a un espacio semántico de baja dimensión mediante descomposición en valores singulares (SVD), mejorando la recuperación basada en conceptos latentes.
+
+\chapter{Fundamentos de LSI}
+\section{Definición formal}
+Sea
+\[
+A\in\mathbb{R}^{m\times n}
+\]
+la matriz término-documento ponderada por TF-IDF. La descomposición SVD es
+\[
+A = U\,\Sigma\,V^T,
+\]
+y su truncación a rango \(k\) produce
+\[
+A_k = U_k\,\Sigma_k\,V_k^T,
+\]
+donde \(U_k\in\mathbb{R}^{m\times k}\), \(\Sigma_k\in\mathbb{R}^{k\times k}\) y \(V_k\in\mathbb{R}^{n\times k}\). Cada fila de \(V_k\Sigma_k\) es el vector latente de un documento, y cada fila de \(U_k\Sigma_k\) el vector latente de un término.
+
+\section{Ventajas}
+\begin{itemize}
+  \item Captura conceptos latentes y co-ocurrencias.
+  \item Aumenta \emph{recall} al encontrar sinónimos.
+  \item Reduce ruido al truncar componentes de baja varianza.
+\end{itemize}
+
+\chapter{Implementación}
+\section{Estructura del proyecto}
+El repositorio contiene:
+\begin{itemize}
+  \item \texttt{template.py}: clase base a personalizar.
+  \item \texttt{main.py}: orquestador que evalúa todos los modelos.
+  \item \texttt{metrics.py}: cálculos de precision, recall y f1.
+  \item \texttt{ranking.py}: generación de tabla de resultados.
+  \item \texttt{start.sh}: script de ejecución.
+\end{itemize}
+
+\section{Preprocesamiento y vectorización}
+Configurar el vectorizador TF-IDF en \texttt{\_\_init\_\_}:
+\begin{verbatim}
+self.vectorizer = TfidfVectorizer(
+    lowercase=True,
+    stop_words='english',
+    max_df=0.8
+)
+\end{verbatim}
+\begin{itemize}
+  \item \textbf{lowercase=True:} unifica mayúsculas/minúsculas.
+  \item \textbf{stop\_words='english':} filtra términos triviales.
+  \item \textbf{max\_df=0.8:} ignora términos muy frecuentes.
+\end{itemize}
+
+\section{Construcción del espacio latente}
+En el método \texttt{fit}:
+\begin{verbatim}
+self.tfidf_matrix = self.vectorizer.fit_transform(self.documents)
+self.svd = TruncatedSVD(n_components=100, random_state=42)
+self.doc_latent_matrix = self.svd.fit_transform(self.tfidf_matrix)
+\end{verbatim}
+\begin{itemize}
+  \item \(\mathbf{A} =\) TF-IDF matriz.
+  \item \(U_k,\Sigma_k,V_k\) obtenidos con \texttt{TruncatedSVD}.
+\end{itemize}
+
+\section{Búsqueda y ranking}
+En \texttt{predict(top\_k)}:
+\begin{verbatim}
+query_vec = self.vectorizer.transform([query_text])
+query_latent = self.svd.transform(query_vec)
+sim_scores = cosine_similarity(query_latent, self.doc_latent_matrix)[0]
+top_idx = sim_scores.argsort()[::-1][:top_k]
+retrieved_ids = [self.doc_ids[i] for i in top_idx]
+return {'text': query_text, 'results': retrieved_ids}
+\end{verbatim}
+
+\section{Aserciones y validaciones internas}
+Para asegurar la consistencia:
+\begin{verbatim}
+assert self.tfidf_matrix.shape[0] == len(self.doc_ids)
+assert self.doc_latent_matrix.shape == (len(self.doc_ids), self.svd.n_components_)
+\end{verbatim}
+
+\chapter{Pruebas y evaluación}
+\section{Ejecución principal}
+\begin{verbatim}
+bash start.sh
+\end{verbatim}
+
+\section{Script de prueba puntual}
+\begin{verbatim}
+# test_lsi.py
+from models.Josue_Rolando_Naranjo_Sieiro_C_311 import InformationRetrievalModel
+from metrics import calculate_metrics
+import ir_datasets
+
+model = InformationRetrievalModel()
+model.fit('cranfield')
+preds = model.predict(5)
+
+# Elegir primera consulta con qrels
+dataset = ir_datasets.load('cranfield')
+first_qid = next(q.query_id for q in dataset.qrels_iter())
+retrieved = preds[first_qid]['results']
+relevant = {qrel.doc_id for qrel in dataset.qrels_iter()
+            if qrel.query_id == first_qid and qrel.relevance > 0}
+
+scores = calculate_metrics(
+    {'relevant_retrieved': set(retrieved)&relevant,
+     'all_retrieved': set(retrieved),
+     'all_relevant': relevant},
+    ['precision','recall','f1']
+)
+print(first_qid, scores)
+\end{verbatim}
+
+\chapter{Información Extra}
+\section{Fuente bibliográfica}
+\begin{itemize}
+  \item Deerwester, S., Dumais, S. T., Furnas, G. W., Landauer, T. K. \& Harshman, R. (1990). \emph{Indexing by Latent Semantic Analysis}. Journal of the American Society for Information Science, 41(6): 391–407. \url{https://www.cs.csustan.edu/~mmartin/LDS/Deerwester-et-al.pdf}
+  \item Dumais, S. T., Furnas, G. W., Landauer, T. K., Deerwester, S. C. \& Harshman, R. (1988). \emph{Using latent semantic analysis to improve access to textual information}. SIGCHI Conference on Human Factors in Computing Systems.
+  \item Berry, M. W., Dumais, S. T. \& O’Brien, G. W. (1995). \emph{Using linear algebra for intelligent information retrieval}. SIAM Review, 37(4): 573–595.
+  \item Manning, C. D., Raghavan, P. \& Schütze, H. (2008). \emph{Introduction to Information Retrieval}. Cambridge University Press.
+  \item Baeza-Yates, R. \& Ribeiro-Neto, B. (2011). \emph{Modern Information Retrieval: The Concepts and Technology Behind Search} (2ª ed.). Addison-Wesley.
+\end{itemize}
+
+\section{Mejora implementada}
+\begin{itemize}
+  \item \textbf{Técnica:} Configuración avanzada de TF-IDF (\texttt{lowercase=True}, \texttt{stop\_words='english'}, \texttt{max\_df=0.8}).  
+  \item \textbf{Beneficio:} Reducción de ruido y términos triviales, mejora de la calidad de los vectores latentes y de las métricas de precisión y recall.
+\end{itemize}
+
+\section{Análisis conceptual}
+\begin{description}
+  \item[Definición formal:] Descomposición SVD truncada de la matriz TF-IDF, \(A_k = U_k\Sigma_kV_k^T\).
+  \item[Dependencias entre términos:] Sí. SVD captura patrones de co-ocurrencia, modelando relaciones semánticas.
+  \item[Correspondencia parcial documento-consulta:] Sí. Permite recuperar documentos sin coincidencia literal de términos.
+  \item[Ranking:] Sí. Documentos ordenados por similitud de coseno en el espacio latente.
+\end{description}
+
+\chapter{Conclusión}
+Se ha diseñado e implementado un modelo LSI respetando las firmas de \texttt{fit} y \texttt{predict}, usando solo bibliotecas autorizadas. La configuración de preprocesamiento y la evaluación con métricas estándar garantizan un sistema robusto y extensible.
+
+\end{document}
